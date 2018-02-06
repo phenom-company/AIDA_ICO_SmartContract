@@ -62,8 +62,8 @@ contract AidaICO {
     using SafeMath for uint256;
 
     // Token price parameters
-    // These parametes can be changed only by manager of contract
-    uint256 public Rate_Eth = 700; // Rate USD per ETH
+    // These parameters can be changed only by oracle of contract
+    uint256 public Rate_Eth = 920; // Rate USD per ETH
     uint256 public Tokens_Per_Dollar = 4; // Aida token per dollar
     uint256 public Token_Price = Tokens_Per_Dollar.mul(Rate_Eth); // Aida token per ETH
 
@@ -109,6 +109,9 @@ contract AidaICO {
     mapping(address => uint256) public tokensIcoInOtherCrypto; // Mapping for remembering tokens of investors who paid at ICO in other crypto currencies
 
     // Events Log
+    event LogStartPreICO();
+    event LogPausePreICO();
+    event LogFinishPreICO();
     event LogStartICO();
     event LogPauseICO();
     event LogFinishICO(address bountyFund, address partnersFund, address teamFund);
@@ -185,7 +188,7 @@ contract AidaICO {
     function startPreIco() external managerOnly {
         require(statusICO == StatusICO.Created || statusICO == StatusICO.PreIcoPaused);
         statusICO = StatusICO.PreIcoStarted;
-        LogStartICO();
+        LogStartPreICO();
     }
 
    /**
@@ -195,7 +198,7 @@ contract AidaICO {
     function pausePreIco() external managerOnly {
         require(statusICO == StatusICO.PreIcoStarted);
         statusICO = StatusICO.PreIcoPaused;
-        LogPauseICO();
+        LogPausePreICO();
     }
    /**
     *   @dev Finish PreIco
@@ -204,12 +207,11 @@ contract AidaICO {
     function finishPreIco() external managerOnly {
         require(statusICO == StatusICO.PreIcoStarted || statusICO == StatusICO.PreIcoPaused);
         statusICO = StatusICO.PreIcoFinished;
-        LogPauseICO();
+        LogFinishPreICO();
     }
 
    /**
     *   @dev Start ICO
-    *   Set start ICO time
     *   Set ICO status to IcoStarted
     */
     function startIco() external managerOnly {
@@ -420,9 +422,9 @@ contract AidaICO {
 
    /**
     *   @dev Burn tokens of investors who paid in other cryptocurrencies
-    *   if preICO or ICO_RETURN_DURATION is not over yet
-    *   @param _investor     address which the tokens will be burnt
-    *   @param _logString    string which contain payment information
+    *   if preICO or ICO return duration is not over yet
+    *   @param _investor     address which tokens will be burnt
+    *   @param _logString    string which contains payment information
     */
     function returnOtherCrypto(
         address _investor,
