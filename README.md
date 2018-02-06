@@ -1,7 +1,6 @@
 # Aida ICO Contract
 
-Please see below description of [Aida ICO][aidamarket] smart contract developed by [Phenom.Team][phenom].
-This is a first ever contract based upon the new concept outlined by Vitalik Buterin when investors can revoke their deposits before the end of the ICO
+Please see below description of [Aida ICO][aidamarket] smart contract developed by [Phenom.Team][phenom]. This is a first ever contract based upon the new concept outlined by Vitalik Buterin when investors can revoke their deposits before the end of the ICO. Also see this contract on [etherscan][etherscanLink].
 
 ## Overview
 AID Token smart-contract is structured upon [ERC20 standard](erc20). 
@@ -13,7 +12,7 @@ AidaIco is the first smart-contract which is structured and based upon the conce
 
 -	For ETH investments: all tokens stashed on investor’s address get burned and invested ETH forwared back to investor’s wallet from AidaIco smart-contract.
 -	BTC, LTC, BCC investments: refund process sf powered by Oracle. The investment amount get refunded back to investor’s wallet, minus transaction fee.
--	Withdrawal lock  – during the main stage of the ICO refund is possible only till 30th January 2018, inclusive. 
+-	Withdrawal lock  – during the main stage of the ICO refund is possible only till 25th April 2018, inclusive. 
 
 ## The Crowdsale Specification
 *	AID token is ERC-20 compliant.
@@ -82,6 +81,13 @@ function enableTokensTransfer() external managerOnly
 ```
 Unfreezes tokens (enable token transfers).
 
+**disableTokensTransfer**
+```cs
+function disableTokensTransfer() external managerOnly
+```
+Freezes tokens (disable token transfers).
+ 
+
 **rememberEther**
 ```cs
 function rememberEther(uint256 _value, address _investor) internal
@@ -124,11 +130,17 @@ function getBonus(uint256 _value) public constant returns(uint256)
 ```
 get current bonus
 
-**daysFromIcoStart**
+**startRefunds**
 ```cs
-function daysFromIcoStart() public constant returns(uint256)
+function startRefunds() external managerOnly
 ```
-Count days from Ico start day.
+Enable returns of investments.
+
+**stopRefunds**
+```cs
+function stopRefunds() external managerOnly
+```
+Disable returns of investments.
 
 **returnEther**
 ```cs
@@ -185,9 +197,13 @@ event LogReturnOtherCrypto(address investor, string logString);
 4. testrpc
 
 ## Run tests
-1. run `testrpc` in terminal
+In these tests, one by one, the correctness of each method of the contract is checked.
+
+1. run `testrpc -l 8000000` in terminal
 2. run `truffle test` in another terminal to execute tests.
 
+## Deploy
+To deploy this contract to custom network add this network to the `truffle.js` and then use `truffle migrate --network <networkName>`
 
 ## Collaborators
 
@@ -196,7 +212,7 @@ event LogReturnOtherCrypto(address investor, string logString);
 * **[Dmitriy Pukhov](https://github.com/puhoshville)**
 * **[Kate Krishtopa](https://github.com/Krishtopa)**
 
-
+[etherscanLink]: https://etherscan.io/address/0xE163f74937C8c3065518486e58D655504DA0D4dB
 [aidamarket]: http://ico.aida.market/index-en.php
 [phenom]: https://phenom.team/
 [erc20]: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
