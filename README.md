@@ -146,7 +146,7 @@ Disable returns of investments.
 ```cs
 function returnEther() public
 ```
-Allows investors to return their investments(in ETH) if preICO or ICO_RETURN_DURATION is not over yet and burns tokens.
+Allows investors to return their investments(in ETH) if return period is not expired  yet and burns tokens.
 
 
 **returnOtherCrypto**
@@ -159,7 +159,7 @@ This method is called by refund manager to burn tokens of investors who want to 
 ```cs
 function withdrawEther(uint256 _value) external managerOnly
 ```
-Allows Company withdrawing investments when ICO_RETURN_DURATION is over
+Allows Company withdrawing investments when return period is expired.
 
 #### AidaIco Events
 
