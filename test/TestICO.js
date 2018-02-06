@@ -26,7 +26,7 @@ contract('AidaICO', function(accounts) {
   };
 
   var ContractAddress;
-  var returnDuration = 10 * 24 * 60 * 60;
+  var returnDuration = 22 * 24 * 60 * 60;
 
   it("should set rate correctly", function() {
 
@@ -97,11 +97,11 @@ contract('AidaICO', function(accounts) {
         from: accounts[3]
       });
     }).then(function(tx) {
-      console.log("This is receipt: " + tx.receipt);
+      //console.log("This is receipt: " + tx.receipt);
       assert.notEqual(tx.receipt.logs.length, 0, "PreICO wasn't started");
     }).catch(function(e) {
-      console.log("PreICO wasn't started");
-      console.log(e);
+      //console.log("PreICO wasn't started");
+      //console.log(e);
       assert(false, "PreICO wasn't started");
     });
   });
@@ -114,7 +114,7 @@ contract('AidaICO', function(accounts) {
         return ContractAddress.getBonus(random_int);
       }).then(function(result) {
       result = JSON.parse(result);
-      console.log(result + " result of getBonus");
+      //console.log(result + " result of getBonus");
       var bonus = Math.floor(random_int * 15 / 100);
       assert.equal(result, bonus, "Bonus isn't correct");
     });
@@ -135,11 +135,11 @@ contract('AidaICO', function(accounts) {
       return AID.balanceOf.call(accounts[0]);
     }).then(function(result) {
       result = JSON.parse(result);
-      console.log(result + " current balance of accounts[0]");
+      //console.log(result + " current balance of accounts[0]");
       assert.isAtLeast(result, 1, "didn't mint tokens");
       return AID.totalSupply.call();
     }).then(function(supply) {
-      console.log(supply + " current totalSupply");
+      //console.log(supply + " current totalSupply");
     });
   });
 
@@ -154,18 +154,18 @@ contract('AidaICO', function(accounts) {
         from: accounts[4]
       })
     }).then(function(result) {
-      console.log(result);
+      //console.log(result);
       return ContractAddress.AID.call()
     }).then(function(token) {
       AID = AIDA.at(token);
       return AID.balanceOf.call(accounts[2]);
     }).then(function(balance) {
       balance = JSON.parse(balance);
-      console.log(balance + " balance of accounts[2]");
+      //console.log(balance + " balance of accounts[2]");
       assert.isAtLeast(balance, random_int, "tokens weren't sent")
       return AID.totalSupply.call();
     }).then(function(supply) {
-      console.log(supply + " current totalSupply");
+      //console.log(supply + " current totalSupply");
     });
 
   });
@@ -180,7 +180,7 @@ contract('AidaICO', function(accounts) {
     }).catch(function(e) {
       assert(false, "ICO wasn't paused");
     }).then(function(tx) {
-      console.log("This is receipt: " + tx.receipt);
+      //console.log("This is receipt: " + tx.receipt);
       assert.notEqual(tx.receipt.logs.length, 0, "ICO wasn't paused");
     });
   });
@@ -233,11 +233,11 @@ contract('AidaICO', function(accounts) {
         from: accounts[3]
       });
     }).then(function(tx) {
-      console.log("This is receipt: " + tx.receipt);
+      //console.log("This is receipt: " + tx.receipt);
       assert.notEqual(tx.receipt.logs.length, 0, "ICO wasn't started");
     }).catch(function(e) {
-      console.log("PreICO wasn't started");
-      console.log(e);
+      //console.log("PreICO wasn't started");
+      //console.log(e);
       assert(false, "PreICO wasn't started");
     });
   });
@@ -257,12 +257,12 @@ contract('AidaICO', function(accounts) {
       AID = AIDA.at(token);
       return AID.balanceOf.call(accounts[3]);
     }).then(function(result) {
-      console.log(result + " current balance of accounts[3]");
+      //console.log(result + " current balance of accounts[3]");
       result = JSON.parse(result);
       assert.isAtLeast(result, 1, "didn't mint tokens");
       return AID.totalSupply.call();
     }).then(function(supply) {
-      console.log(supply + " current totalSupply");
+      //console.log(supply + " current totalSupply");
     });
   });
 
@@ -274,23 +274,58 @@ contract('AidaICO', function(accounts) {
         from: accounts[4]
       });
     }).then(function(result) {
-      console.log(result);
+      //console.log(result);
       return ContractAddress.AID.call()
     }).then(function(token) {
       AID = AIDA.at(token);
       return AID.balanceOf.call(accounts[1]);
     }).then(function(balance) {
-      console.log(balance + " balance of accounts[1]");
+      //console.log(balance + " balance of accounts[1]");
       balance = JSON.parse(balance);
       assert.isAtLeast(balance, random_int, "tokens weren't sent")
       return AID.totalSupply.call();
     }).then(function(supply) {
-      console.log(supply + " current totalSupply");
+      //console.log(supply + " current totalSupply");
     });
 
   });
 
-  it("should return eth", function() {
+  it("should stopRefunds", function () {
+      return AidaICO.deployed().then(function(instance) {
+      ContractAddress = instance;
+      return ContractAddress.stopRefunds({
+        from: accounts[3],
+      });
+    }).catch(function() {
+        assert(false, "should stopRefunds");
+      })    
+  })
+
+  it("shouldn't return eth ", function() {
+
+    return AidaICO.deployed().then(function(instance) {
+      ContractAddress = instance;
+      return ContractAddress.returnEther({
+        from: accounts[3],
+      });
+    }).then(function() {
+      assert(false, "shouldn't return eth");
+    }).catch(function() {})
+  });
+
+
+  it("should startRefunds", function () {
+      return AidaICO.deployed().then(function(instance) {
+      ContractAddress = instance;
+      return ContractAddress.startRefunds({
+        from: accounts[3],
+      });
+    }).catch(function() {
+        assert(false, "should stopRefunds");
+      })    
+  })
+
+  it("should return eth ", function() {
 
     return AidaICO.deployed().then(function(instance) {
       ContractAddress = instance;
@@ -304,16 +339,17 @@ contract('AidaICO', function(accounts) {
       return AID.balanceOf.call(accounts[3]);
     }).then(function(result) {
       result = JSON.parse(result);
-      console.log(result + " current balance of accounts[3]");
+      //console.log(result + " current balance of accounts[3]");
       assert.equal(result, 0, "didn't burn tokens");
     }).then(function() {
       return web3.eth.getBalance(ContractAddress.address);
     }).then(function(balance) {
       balance = JSON.parse(balance);
-      console.log("This is ether balance of contract: " + balance);
+      //console.log("This is ether balance of contract: " + balance);
       assert.equal(balance, 4000000000000000000, "didn't return eth");
     });
   });
+
 
   it("shouldn't return Eth to investor who returned ", function() {
     var flag = 0;
@@ -349,11 +385,11 @@ contract('AidaICO', function(accounts) {
       return AID.balanceOf.call(accounts[9]);
     }).then(function(result) {
       result = JSON.parse(result);
-      console.log(result + " current balance of accounts[9]");
+      //console.log(result + " current balance of accounts[9]");
       assert.isAtLeast(result, 1, "didn't mint tokens");
       return AID.totalSupply.call();
     }).then(function(supply) {
-      console.log(supply + " current totalSupply");
+      //console.log(supply + " current totalSupply");
     });
   });
 
@@ -364,17 +400,26 @@ contract('AidaICO', function(accounts) {
         from: accounts[3]
       });
     }).then(function(tx) {
-      console.log("This is receipt: " + tx.receipt);
+      //console.log("This is receipt: " + tx.receipt);
       assert.notEqual(tx.receipt.logs.length, 0, "ICO wasn't started");
     }).catch(function(e) {
-      console.log("ICO wasn't started");
-      console.log(e);
+      //console.log("ICO wasn't started");
+      //console.log(e);
       assert(false, "ICO wasn't started");
     });
   });
 
 
-
+  it("should stopRefunds", function () {
+      return AidaICO.deployed().then(function(instance) {
+      ContractAddress = instance;
+      return ContractAddress.stopRefunds({
+        from: accounts[3],
+      });
+    }).catch(function() {
+        assert(false, "should stopRefunds");
+      })    
+  })
 
 
 
@@ -388,14 +433,27 @@ contract('AidaICO', function(accounts) {
         from: accounts[3]
       });
     }).then(function(tx) {
-      console.log("This is receipt: " + tx.receipt);
+      //console.log("This is receipt: " + tx.receipt);
       assert.notEqual(tx.receipt.logs.length, 0, "ICO wasn't started");
     }).catch(function(e) {
-      console.log("ICO wasn't started");
-      console.log(e);
+      //console.log("ICO wasn't started");
+      //console.log(e);
       assert(false, "ICO wasn't started");
     });
   });
+
+
+
+  it("should startRefunds", function () {
+      return AidaICO.deployed().then(function(instance) {
+      ContractAddress = instance;
+      return ContractAddress.startRefunds({
+        from: accounts[3],
+      });
+    }).catch(function() {
+        assert(false, "should stopRefunds");
+      })    
+  })
 
   it("should get bonus correctly", function() {
     var random_int = randomInteger(1, 10000000);
@@ -405,7 +463,7 @@ contract('AidaICO', function(accounts) {
         return ContractAddress.getBonus(random_int);
       }).then(function(result) {
       result = JSON.parse(result);
-      console.log(result + " result of getBonus");
+      //console.log(result + " result of getBonus");
       assert.equal(result, 0, "Bonus isn't correct");
     });
   });
@@ -425,11 +483,11 @@ contract('AidaICO', function(accounts) {
       return AID.balanceOf.call(accounts[0]);
     }).then(function(result) {
       result = JSON.parse(result);
-      console.log(result + " current balance of accounts[0]");
+      //console.log(result + " current balance of accounts[0]");
       assert.isAtLeast(result, 1, "didn't mint tokens");
       return AID.totalSupply.call();
     }).then(function(supply) {
-      console.log(supply + " current totalSupply");
+      //console.log(supply + " current totalSupply");
     });
   });
 
@@ -442,18 +500,18 @@ contract('AidaICO', function(accounts) {
         from: accounts[4]
       })
     }).then(function(result) {
-      console.log(result);
+      //console.log(result);
       return ContractAddress.AID.call()
     }).then(function(token) {
       AID = AIDA.at(token);
       return AID.balanceOf.call(accounts[2]);
     }).then(function(balance) {
       balance = JSON.parse(balance);
-      console.log(balance + " balance of accounts[2]");
+      //console.log(balance + " balance of accounts[2]");
       assert.isAtLeast(balance, random_int, "tokens weren't sent")
       return AID.totalSupply.call();
     }).then(function(supply) {
-      console.log(supply + " current totalSupply");
+      //console.log(supply + " current totalSupply");
     });
 
   });
@@ -468,7 +526,7 @@ contract('AidaICO', function(accounts) {
     }).catch(function(e) {
       assert(false, "ICO wasn't paused");
     }).then(function(tx) {
-      console.log("This is receipt: " + tx.receipt);
+      //console.log("This is receipt: " + tx.receipt);
       assert.notEqual(tx.receipt.logs.length, 0, "ICO wasn't paused");
     });
   });
@@ -521,11 +579,11 @@ contract('AidaICO', function(accounts) {
         from: accounts[3]
       });
     }).then(function(tx) {
-      console.log("This is receipt: " + tx.receipt);
+      //console.log("This is receipt: " + tx.receipt);
       assert.notEqual(tx.receipt.logs.length, 0, "ICO wasn't started");
     }).catch(function(e) {
-      console.log("ICO wasn't started");
-      console.log(e);
+      //console.log("ICO wasn't started");
+      //console.log(e);
       assert(false, "ICO wasn't started");
     });
   });
@@ -546,11 +604,11 @@ contract('AidaICO', function(accounts) {
       return AID.balanceOf.call(accounts[8]);
     }).then(function(result) {
       result = JSON.parse(result);
-      console.log(result + " current balance of accounts[3]");
+      //console.log(result + " current balance of accounts[3]");
       assert.isAtLeast(result, 1, "didn't mint tokens");
       return AID.totalSupply.call();
     }).then(function(supply) {
-      console.log(supply + " current totalSupply");
+      //console.log(supply + " current totalSupply");
     });
   });
 
@@ -562,18 +620,18 @@ contract('AidaICO', function(accounts) {
         from: accounts[4]
       });
     }).then(function(result) {
-      console.log(result);
+      //console.log(result);
       return ContractAddress.AID.call()
     }).then(function(token) {
       AID = AIDA.at(token);
       return AID.balanceOf.call(accounts[1]);
     }).then(function(balance) {
-      console.log(balance + " balance of accounts[1]");
+      //console.log(balance + " balance of accounts[1]");
       balance = JSON.parse(balance);
       assert.isAtLeast(balance, random_int, "tokens weren't sent")
       return AID.totalSupply.call();
     }).then(function(supply) {
-      console.log(supply + " current totalSupply");
+      //console.log(supply + " current totalSupply");
     });
 
   });
@@ -592,13 +650,13 @@ contract('AidaICO', function(accounts) {
       return AID.balanceOf.call(accounts[0]);
     }).then(function(result) {
       result = JSON.parse(result);
-      console.log(result + " current balance of accounts[0]");
+      //console.log(result + " current balance of accounts[0]");
       //  assert.equal(result, 0, "didn't burn tokens");
     }).then(function() {
       return web3.eth.getBalance(ContractAddress.address);
     }).then(function(balance) {
       balance = JSON.parse(balance);
-      console.log("This is ether balance of contract: " + balance);
+      //console.log("This is ether balance of contract: " + balance);
       assert.equal(balance, 7000000000000000000, "didn't return eth");
     });
   });
@@ -666,7 +724,7 @@ contract('AidaICO', function(accounts) {
 
     return AidaICO.deployed().then(function(instance) {
       ContractAddress = instance;
-      return ContractAddress.withdrawEther(web3.toWei(1, "ether"), {
+      return ContractAddress.withdrawEther({
         from: accounts[3]
       })
     }).then(function() {
@@ -680,15 +738,27 @@ contract('AidaICO', function(accounts) {
     });
   });
 
+  it("should stopRefunds", function () {
+      return AidaICO.deployed().then(function(instance) {
+      ContractAddress = instance;
+      return ContractAddress.stopRefunds({
+        from: accounts[3],
+      });
+    }).catch(function() {
+        assert(false, "should stopRefunds");
+      })    
+  })
+
+
+
+
+
   it("shouldn't return Eth from ICO", async function() {
     var flag = 0;
 
-    await timeTravel(returnDuration);
+    //await timeTravel(returnDuration);
     return AidaICO.deployed().then(function(instance) {
       ContractAddress = instance;
-      return ContractAddress.daysFromIcoStart();
-    }).then(function(days) {
-      console.log("Days from start of ICO " + days);
       return ContractAddress.returnEther({
         from: accounts[8]
       });
@@ -712,11 +782,11 @@ contract('AidaICO', function(accounts) {
         from: accounts[3]
       });
     }).catch(function(e) {
-      console.log("ICO wasn't finished");
-      console.log(e);
+      //console.log("ICO wasn't finished");
+      //console.log(e);
       assert(false, "ICO wasn't finished");
     }).then(function(tx) {
-      console.log("This is receipt: " + tx.receipt);
+      //console.log("This is receipt: " + tx.receipt);
       assert.notEqual(tx.receipt.logs.length, 0, "ICO wasn't finished");
     });
 
@@ -726,16 +796,16 @@ contract('AidaICO', function(accounts) {
     it("should withdraw ether", function() {
     return AidaICO.deployed().then(function(instance) {
       ContractAddress = instance;
-      return ContractAddress.withdrawEther(web3.toWei(7, "ether"), {
+      return ContractAddress.withdrawEther({
         from: accounts[3]
       });
     }).then(function(result) {
-      console.log(result);
+      //console.log(result);
     }).then(function() {
       return web3.eth.getBalance(ContractAddress.address);
     }).then(function(balance) {
       balance = JSON.parse(balance);
-      console.log(balance + " balance of our contract");
+      //console.log(balance + " balance of our contract");
       assert.equal(balance, 0, "doesn't withdraw ether right")
     })
   });
@@ -779,6 +849,24 @@ contract('AidaICO', function(accounts) {
         assert(false, "shouldn't buy tokens for investor when ico isn't started");
       }
     });
+  });
+
+
+
+    it("should time travel in 22 days and doesn't allow to freeze tokens", async function() {
+    var flag = 0;
+
+    await timeTravel(returnDuration);
+    return AidaICO.deployed().then(function(instance) {
+      ContractAddress = instance;
+      return ContractAddress.disableTokensTransfer({
+        from: accounts[3]
+      });
+    }).then(function() {
+      assert(false, "shouldn't allow to freezze tokens")
+    }).catch(function(e) {
+
+    })
   });
 
 });

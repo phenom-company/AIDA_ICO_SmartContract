@@ -1,7 +1,7 @@
 // AID tokensale smart contract.
 // Developed by Phenom.Team <info@phenom.team>
 
-// pragma solidity ^ 0.4.15;
+pragma solidity ^ 0.4.15;
 
 /**
  *   @title SafeMath
@@ -52,10 +52,10 @@ contract ERC20 {
 }
 
 /**
-*   @title AidaICO contract  - takes funds from users and issues tokens
-*   @dev AidaICO - it's the first ever contract for ICO which allows users to
-*                  return their investments.
-*/
+ *   @title AidaICO contract  - takes funds from users and issues tokens
+ *   @dev AidaICO - it's the first ever contract for ICO which allows users to
+ *                  return their investments.
+ */
 contract AidaICO {
     // AID - Aida token contract
     AidaToken public AID = new AidaToken(this);
@@ -67,17 +67,12 @@ contract AidaICO {
     uint256 public Tokens_Per_Dollar = 4; // Aida token per dollar
     uint256 public Token_Price = Tokens_Per_Dollar.mul(Rate_Eth); // Aida token per ETH
 
-    // Crowdfunding parameters
-    uint256 constant ICO_RETURN_DURATION = 9; //
-    // ICO duration: 21.01.18  - 10.01,18
-    // return duration: 21.01.18 - 30.01.18
-    // Investors can return their investments during ICO_RETURN_DURATION
-    // Company can withdraw  ether from ico contract after ICO_RETURN_DURATION
     uint256 constant bountyPart = 10; // 1% of TotalSupply for BountyFund
     uint256 constant partnersPart = 30; //3% f TotalSupply for PartnersFund
     uint256 constant teamPart = 200; //20% of TotalSupply for TeamFund
     uint256 constant icoAndPOfPart = 760; // 76% of TotalSupply for PublicICO and PrivateOffer
-    uint256 startTime = 0; // Start time timestamp
+    bool public returnPeriodExpired = false;
+    uint256 finishTime = 0;
 
     // Output ethereum addresses
     address public Company;
@@ -219,9 +214,6 @@ contract AidaICO {
     */
     function startIco() external managerOnly {
         require(statusICO == StatusICO.PreIcoFinished || statusICO == StatusICO.IcoPaused);
-        if (statusICO == StatusICO.PreIcoFinished) {
-            startTime = now;
-        }
         statusICO = StatusICO.IcoStarted;
         LogStartICO();
     }
@@ -247,15 +239,24 @@ contract AidaICO {
         AID.mintTokens(PartnersFund, partnersPart.mul(totalAmount).div(1000));
         AID.mintTokens(TeamFund, teamPart.mul(totalAmount).div(1000));
         statusICO = StatusICO.IcoFinished;
+        finishTime = now;
         LogFinishICO(BountyFund, PartnersFund, TeamFund);
     }
+
 
    /**
     *   @dev Unfreeze tokens(enable token transfers)
     */
     function enableTokensTransfer() external managerOnly {
-        require(statusICO == StatusICO.IcoFinished);
         AID.defrostTokens();
+    }
+
+    /**
+    *   @dev Freeze tokens(disable token transfers)
+    */
+    function disableTokensTransfer() external managerOnly {
+        require((statusICO != StatusICO.IcoFinished) || (now <= finishTime + 21 days));
+        AID.frostTokens();
     }
 
    /**
@@ -371,24 +372,30 @@ contract AidaICO {
         return bonus;
     }
 
-   /**
-    *   @dev Count days from Ico start day
-    */
-    function daysFromIcoStart()
-        public
-        constant
-        returns(uint256)
-    {
-        return now.sub(startTime) / 24 hours;
-    }
+
+  /**
+   *   @dev Enable returns of investments
+   */
+   function startRefunds() external managerOnly {
+        returnPeriodExpired = false;
+   }
+
+  /**
+   *   @dev Disable returns of investments
+   */
+   function stopRefunds() external managerOnly {
+        returnPeriodExpired = true;
+   }
+
 
    /**
     *   @dev Allows investors to return their investments(in ETH)
-    *   if preICO or ICO_RETURN_DURATION is not over yet
+    *   if preICO or ICO return duration is not over yet
     *   and burns tokens
     */
     function returnEther() public {
         require(!used[msg.sender]);
+        require(!returnPeriodExpired);
         uint256 eth = 0;
         uint256 tokens = 0;
         if (statusICO == StatusICO.PreIcoStarted) {
@@ -400,14 +407,13 @@ contract AidaICO {
         }
         if (statusICO == StatusICO.IcoStarted) {
             require(ethIco[msg.sender] > 0);
-            require(daysFromIcoStart() <= ICO_RETURN_DURATION);
             eth = ethIco[msg.sender];
             tokens = tokensIco[msg.sender];
             ethIco[msg.sender] = 0;
             tokensIco[msg.sender] = 0;
         }
-        msg.sender.transfer(eth);
         used[msg.sender] = true;
+        msg.sender.transfer(eth);
         AID.burnTokens(msg.sender, tokens);
         LogReturnEth(msg.sender, eth);
     }
@@ -425,12 +431,12 @@ contract AidaICO {
         external
         refundManagerOnly {
         uint256 tokens = 0;
+        require(!returnPeriodExpired);
         if (statusICO == StatusICO.PreIcoStarted) {
             tokens = tokensPreIcoInOtherCrypto[_investor];
             tokensPreIcoInOtherCrypto[_investor] = 0;
         }
         if (statusICO == StatusICO.IcoStarted) {
-            require(daysFromIcoStart() <= ICO_RETURN_DURATION);
             tokens = tokensIcoInOtherCrypto[_investor];
             tokensIcoInOtherCrypto[_investor] = 0;
         }
@@ -439,12 +445,11 @@ contract AidaICO {
     }
 
    /**
-    *   @dev Allows Company withdraw investments when ICO_RETURN_DURATION is over
-    *   @param _value        amount of ETH to send in Wei
+    *   @dev Allows Company withdraw investments
     */
-    function withdrawEther(uint256 _value) external managerOnly {
+    function withdrawEther() external managerOnly {
         require(statusICO == StatusICO.PreIcoFinished || statusICO == StatusICO.IcoFinished);
-        Company.transfer(_value);
+        Company.transfer(this.balance);
     }
 
 }
@@ -494,10 +499,17 @@ contract AidaToken is ERC20 {
     }
 
    /**
-    *   @dev Disables/enables token transfers
+    *   @dev Enables token transfers
     */
     function defrostTokens() external icoOnly {
       tokensAreFrozen = false;
+    }
+
+   /**
+    *   @dev Disables token transfers
+    */
+    function frostTokens() external icoOnly {
+      tokensAreFrozen = true;
     }
 
    /**
